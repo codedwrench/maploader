@@ -1,21 +1,19 @@
-# Dreame Vacuum Robot Maploader
+# Midea Vacuum Robot Maploader
 
-Provides a map changing functionality for rooted vacuum robots running Valetudo, controllable via MQTT. This project currently supports Dreame robots, see the supported model list below.
-A similar project for Xiaomi/Roborock vacuums (without further affiliation) can be found here: [Thyraz/MapLoader](https://github.com/Thyraz/MapLoader).
+Provides a map changing functionality for rooted vacuum robots running Valetudo, controllable via MQTT. This project currently supports Midea robots, see the supported model list below.
+This is a fork of the following project: [pkoehlers/maploader](https://github.com/pkoehlers/maploader).
 
 ## Note
-The map changing process used in this project is based on observations and testing. It is not officially supported by Dreame or Valetudo. It's recommended to back up your map before using the maploader. Map changes should not be done during cleaning tasks but may be done when the robot is not docked.
+The map changing process used in this project is based on observations and testing. It is not officially supported by Midea or Valetudo. It's recommended to back up your map before using the maploader. Map changes should not be done during cleaning tasks but may be done when the robot is not docked.
 
 ## How it works
 The maploader is a program running on the robot. It communicates with a configured MQTT broker to manage map changes. 
 
 When a new map name is received, the robot backs up the current map, removes all map files, and loads the new map if it exists. The robot's relevant processes are then restarted to apply the new map.
 
-In case of issues, backup archives for each map are available in `/data/maploader`. 
+In case of issues, backup archives for each map are available in `/userdata/maploader`. 
 
 The default map name is main. 
-
-After map change, Valetudo restarts and may temporarily show an empty or the old map. This process can be sped up by starting the cleaning (and stopping it immediately).
 
 ## Feature: WAV Audio Notification
 Maploader now supports playing a WAV audio file for status changes. This feature is particularly useful for audible notifications when the map is loaded or changed. The audio file path and arguments for the `aplay` command are configurable via environment variables.
@@ -25,13 +23,13 @@ Maploader now supports playing a WAV audio file for status changes. This feature
 - **WAV_APLAY_ARGS**: Optionally set the arguments for the `aplay` command. Defaults to `-Dhw:0,0` if not set.
 
 Below is an example of the filenames for the WAV files, showcasing different audio files for different maps:
-- `/data/maploader/wav`
+- `/userdata/maploader/wav`
   - `map_change_default.wav`
   - `map_change_livingroom.wav`
   - `map_change_main.wav`
 
 This can be used with this environment variable:
-`WAV_FILE_MAP_LOADED=/data/maploader/wav/map_change_{map_name}.wav`
+`WAV_FILE_MAP_LOADED=/userdata/maploader/wav/map_change_{map_name}.wav`
 
 The wav directory includes a default file (`map_change_default.wav`) and specific files for different map names (e.g., `livingroom`, `main`).
 
@@ -101,8 +99,8 @@ mqtt:
       device:
         name: "valetudo"
         identifiers: "foo"
-        manufacturer: "Dreame"
-        model: "L10S Ultra"
+        manufacturer: "Midea"
+        model: "J15 Pro Ultra"
   select:
     - command_topic: valetudo/foo/maploader/map/set
       state_topic: valetudo/foo/maploader/map
@@ -114,8 +112,8 @@ mqtt:
       device:
         name: "valetudo"
         identifiers: "foo"
-        manufacturer: "Dreame"
-        model: "L10S Ultra"
+        manufacturer: "Midea"
+        model: "J15 Pro Ultra"
 ```
 
 Replace `foo` with your vacuum's identifier, and update the `device` values to match your vacuum's actual values (found in diagnostics).
@@ -124,27 +122,17 @@ Replace `foo` with your vacuum's identifier, and update the `device` values to m
 
 The following models are known to work with the maploader:
 
-| Model                               | binary                     |
-|-------------------------------------|----------------------------|
-| Dreame L10 Pro                      | maploader-arm64            |
-| Dreame Z10 Pro                      | maploader-arm64            |
-| Dreame D10S Pro                     | maploader-arm64            |
-| Dreame D10S Plus                    | maploader-arm64            |
-| Dreame L10s Ultra                   | maploader-arm64            |
-| Dreame X40                          | maploader-arm64            |
-| Dreame F9                           | maploader-arm              |
-| Dreame D9                           | maploader-arm              |
-| Dreame D9 Pro                       | maploader-arm              |
-| Dreame W10                          | maploader-arm              |
-| Xiaomi Mi Robot Vacuum-Mop 2 Ultra  | maploader-arm64            |
-| Mova P10 Pro Ultra                  | maploader-arm64            |
+| Model                 | binary                     |
+|-----------------------|----------------------------|
+| Eureka J15 Pro Ultra  | maploader-arm64            |
 
-If your Dreame robot is not listed here, you need to find out the arch of your robot (e.g. with ```uname -m```, where ```aarch64``` -> ...-arm64 binary).
 
-Please open an issue, if your Dreame robot is not listed here but works or you need assistance.
+If your Midea robot is not listed here, you need to find out the arch of your robot (e.g. with ```uname -m```, where ```aarch64``` -> ...-arm64 binary).
+
+Please open an issue, if your Midea robot is not listed here but works, or you need assistance.
 
 # Installation
-The binary must be placed in the ```/data``` folder and it needs to be started with the system.
+The binary must be placed in the ```/userdata``` folder and it needs to be started with the system.
 
 Make sure that Valetudo is working and MQTT is also setup in Valetudo.
 
@@ -154,21 +142,21 @@ Open a SSH terminal
 
 Download the binary: (check the supported robots section for the correct filename in the URL)
 
-```wget -O /data/maploader-binary https://github.com/pkoehlers/maploader/releases/latest/download/maploader-arm64```
+```wget -O /userdata/maploader-binary https://github.com/pkoehlers/maploader/releases/latest/download/maploader-arm64```
 
 Add execution permissions:
 
-```chmod +x /data/maploader-binary```
+```chmod +x /userdata/maploader-binary```
 
 Open the postboot script:
 
-```vi /data/_root_postboot.sh```
+```vi /oem/_root_postboot.sh```
 
 Search for the valetudo start block and add the maploader binary after the start of Valetudo so that it looks like this:
 ```
-if [[ -f /data/valetudo ]]; then
-        VALETUDO_CONFIG_PATH=/data/valetudo_config.json /data/valetudo > /dev/null 2>&1 &
-        VALETUDO_CONFIG_PATH=/data/valetudo_config.json /data/maploader-binary > /dev/null 2>&1 &
+if [[ -f /userdata/valetudo ]]; then
+        VALETUDO_CONFIG_PATH=/userdata/valetudo_config.json /userdata/valetudo > /dev/null 2>&1 &
+        VALETUDO_CONFIG_PATH=/userdata/valetudo_config.json /userdata/maploader-binary > /dev/null 2>&1 &
 fi
 ```
 
@@ -177,25 +165,40 @@ Reboot
 # Configuration
 The following things can be customized with environment variables:
 
-| Variable                   | Default value              | Description                                                    |
-|----------------------------|----------------------------|----------------------------------------------------------------|
-| VALETUDO_CONFIG_PATH       | /data/valetudo_config.json | Path to the valetudo config file                               |
-| MAPLOADER_RESTART_VALETUDO |                            | Set to any value to restart Valetudo after map changes         |
-| MAPLOADER_DIR              | /data/maploader            | Directory to store the maps and logs                           |
-| DEFAULT_MAP_NAME           | main                       | Name of the main map (for first use)                           |
-| ROTATION_KEEP_MAPS         | 5                          | Number of map backups to keep per map                          |
-| WAV_FILE_MAP_LOADED        |                            | Path to WAV file for audio notification (supports placeholders)|
-| WAV_APLAY_ARGS             | -Dhw:0,0                   | Arguments for the `aplay` command (audio playback)             |
+| Variable                   | Default value                  | Description                                                    |
+|----------------------------|--------------------------------|----------------------------------------------------------------|
+| VALETUDO_CONFIG_PATH       | /userdata/valetudo_config.json | Path to the valetudo config file                               |
+| MAPLOADER_RESTART_VALETUDO |                                | Set to any value to restart Valetudo after map changes         |
+| MAPLOADER_DIR              | /userdata/maploader            | Directory to store the maps and logs                           |
+| DEFAULT_MAP_NAME           | main                           | Name of the main map (for first use)                           |
+| ROTATION_KEEP_MAPS         | 2                              | Number of map backups to keep per map                          |
+| WAV_FILE_MAP_LOADED        |                                | Path to WAV file for audio notification (supports placeholders)|
+| WAV_APLAY_ARGS             | -Dhw:0,0                       | Arguments for the `aplay` command (audio playback)             |
 
 
 # Technical Details
-As mentioned this is only tested with the Dreame L10 Pro but other Dreame robots should work just fine.
+As mentioned, this is only tested with the Eureka J15 Pro Ultra.
+The current assumption is: Slot1 is the active slot for maps, which will be a copy of Slot2 or Slot3. For some reason
+there are also backups saved with a (backup_) prefix.
 Currently, these files/directories are considered "map files":
 
-* ```/data/ri```
-* ```/data/map```
-* ```/data/DivideMap```
-* ```/data/config/ava/mult_map.json```
+* ```/oem/slam/(backup_)OriginSlamMapXX.map.gz```  
+* ```/oem/slam/(backup_)auto_room_mapXX.bin.gz``` 
+* ```/oem/slam/(backup_)room_beautify_mapXX.bin.gz``` 
+* ```/oem/slam/(backup_)room_mapXX.bin.gz``` 
+* ```/oem/slam/(backup_)carpet_mapXX.bin.gz```
+* ```/oem/slam/(backup_)room_cfgXX.settings```
+* ```/oem/slam/(backup_)room_infoX.yml```
+* ```/oem/slam/(backup_)carpet_infoX.yml```
+* ```/oem/slam/(backup_)bridge_X.settings```
+* ```/oem/slam/(backup_)charge_dock_X.settings```
+* ```/oem/slam/(backup_)cruise_point_X.settings```
+* ```/oem/slam/(backup_)curtain_X.settings```
+* ```/oem/slam/(backup_)forb_zone_X.settings```
+* ```/oem/slam/(backup_)manual_lines_X.settings```
+* ```/oem/slam/(backup_)threshold_X.settings```
+* ```/oem/slam/(backup_)histotorical_trajectoryX.yml```
+* ```/oem/slam/room_map_to_planner.bin```
 
 Basically these are all the files that will be cleared by resetting the map via Valetudo.
 
