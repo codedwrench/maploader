@@ -8,8 +8,11 @@ import (
 	"strings"
 )
 
+const serialFile = "/oem/midea/device.sn8"
+
 type Robot struct {
 	model            string
+	Serials          []string
 	MapFolders       []string
 	mapFiles         []string
 	restartProcesses []Process
@@ -26,32 +29,48 @@ func DetectRobot() {
 
 	util.CheckAndHandleError(err)
 
-	robotName := strings.Split(hostname, "_")[0]
 	var possibleRobots []Robot
 
 	for _, cRobot := range robots {
-		if cRobot.model == robotName {
+		if cRobot.model == hostname {
 			possibleRobots = append(possibleRobots, cRobot)
 		}
 	}
+
 	if len(possibleRobots) == 0 {
-		possibleRobots = robots
-		log.Printf("Could not determine robot model using model: %s", robotName)
-		log.Printf("Trying to identify compatible configuration. Please open a Issue/PR, if you think this configuration works well on your model")
+		log.Printf("Hostname is not 'midea', are you sure this is a Midea robot?")
+    	CurrentRobot = nil, errors.New("Robot model could not be determined or is not supported")
+        return
 	}
 
-	CurrentRobot, err = SelectAndValidateRobot(possibleRobots...)
-	util.CheckAndHandleError(err)
+	serial, err := os.ReadFile(serialFile)
+	if err != nil {
+		log.Printf("Could not read robot serial from %s: %v; are you sure this is a Midea robot?", serialFile, err)
+		CurrentRobot = nil, errors.New("Robot model could not be determined or is not supported")
+		return
+	}
+
+	for _, cRobot := range possibleRobots {
+		for _, cSerial := range cRobot.Serials {
+			if cSerial == serial {
+				CurrentRobot = ValidateRobot(cRobot)
+				break
+			}
+		}
+	    if (CurrentRobot != nil) {
+	    	break
+	    }
+	}
+
 	log.Printf("Using configuration for model: %s", CurrentRobot.model)
 }
 
-func SelectAndValidateRobot(possibleRobots ...Robot) (*Robot, error) {
+func ValidateRobot(robot Robot) bool {
 
-	for _, cRobot := range possibleRobots {
-		if util.CheckDirectoriesExists(cRobot.MapFolders...) &&
-			util.CheckFilesExists(cRobot.mapFiles...) {
-			return &cRobot, nil
-		}
+	if util.CheckDirectoriesExists(cRobot.MapFolders...) &&
+		util.CheckFilesExists(cRobot.mapFiles...) {
+		return true
 	}
-	return nil, errors.New("Robot model could not be determined or is not supported")
+
+	return false
 }
