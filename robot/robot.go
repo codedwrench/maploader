@@ -18,8 +18,14 @@ type Robot struct {
 	restartProcesses []Process
 }
 
-func (r *Robot) MapFilesAndFolders() []string {
-	return append(r.MapFolders, r.mapFiles...)
+func (r *Robot) MapFiles() []string {
+	mapFullPaths = make([]string, len(r.mapFiles))
+
+	for i, mapFile := range r.mapFiles {
+    	mapFullPaths[i] = path.Join(r.MapFolder, mapFile)
+	}
+
+	return mapFullPaths
 }
 
 var CurrentRobot *Robot

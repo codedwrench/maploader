@@ -4,7 +4,7 @@ var robots []Robot = []Robot{
 	/*
 		{model: "your.hostname", // Debug config
 		    Serials:          []string{},
-			MapFolder:        []string{},
+			MapFolder:        "folder",
 			mapFiles:         []string{},
 			restartProcesses: []Process{}},
 	*/
@@ -33,7 +33,7 @@ var robots []Robot = []Robot{
 							 "room_map_to_planner.bin"} // this one, we just need to delete it
 		restartProcesses: []Process{MiioClientProcess, AvaProcess}},
 	{model: "midea", // Eureka J15 Ultra
-		Serials:          []string{"750Y000V", "750Y000W"},
+		Serials:	[]string{"750Y000V", "750Y000W"},
 		// Single folder as opposed to original repo, these vacuums have 3 slots and backup files, in the same folder.
 		MapFolder:	"/oem/slam",
 		// Let's go for slot 1 here, we'll deduce the other slots from that and also the backup files
