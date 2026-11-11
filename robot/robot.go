@@ -13,7 +13,7 @@ const serialFile = "/oem/midea/device.sn8"
 type Robot struct {
 	model            string
 	Serials          []string
-	MapFolders       []string
+	MapFolder        string
 	mapFiles         []string
 	restartProcesses []Process
 }
@@ -66,7 +66,7 @@ func DetectRobot() {
 
 func ValidateRobot(robot Robot) bool {
 
-	if util.CheckDirectoriesExists(cRobot.MapFolders...) &&
+	if util.CheckDirectoryExists(cRobot.MapFolder) &&
 		util.CheckFilesExists(cRobot.mapFiles...) {
 		return true
 	}
