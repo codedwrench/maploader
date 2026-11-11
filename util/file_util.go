@@ -22,6 +22,15 @@ func RemoveDirContents(dirNames ...string) error {
 	return nil
 }
 
+func RemoveFile(fileName string) error {
+	os.Remove(fileName)
+	if err != nil {
+	  return err
+	}
+
+	return nil
+}
+
 // roatates the provided file by adding the current timestamp to its name
 func RotateFile(rotationCount int, baseFileName string, baseFileExtension string) error {
 

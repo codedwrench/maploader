@@ -2,24 +2,31 @@ package robot
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"maploader/util"
 	"os"
+	"path"
+	"regexp"
+	"strconv"
 	"strings"
 )
-
-const serialFile = "/oem/midea/device.sn8"
 
 type Robot struct {
 	model            string
 	Serials          []string
 	MapFolder        string
+	MapToPlannerFile string
 	mapFiles         []string
 	restartProcesses []Process
 }
 
+var CurrentRobot *Robot
+const serialFile = "/oem/midea/device.sn8"
+var slotRegex = regexp.MustCompile(`([a-zA-Z_0]+)\d+`)
+
 func (r *Robot) MapFiles() []string {
-	mapFullPaths = make([]string, len(r.mapFiles))
+	mapFullPaths := make([]string, len(r.mapFiles))
 
 	for i, mapFile := range r.mapFiles {
     	mapFullPaths[i] = path.Join(r.MapFolder, mapFile)
@@ -28,9 +35,18 @@ func (r *Robot) MapFiles() []string {
 	return mapFullPaths
 }
 
-var CurrentRobot *Robot
+func (r *Robot) MapFilesForSlot(slot int) []string {
+	mapFullPaths := make([]string, len(r.mapFiles))
 
-func DetectRobot() {
+	for i, mapFile := range r.mapFiles {
+		mapFileForNewSlot := slotRegex.ReplaceAllString(mapFile, "${1}"+strconv.Itoa(slot))
+    	mapFullPaths[i] = path.Join(r.MapFolder, mapFileForNewSlot)
+	}
+
+	return mapFullPaths
+}
+
+func DetectRobot() error {
 	hostname, err := os.Hostname()
 
 	util.CheckAndHandleError(err)
@@ -44,38 +60,29 @@ func DetectRobot() {
 	}
 
 	if len(possibleRobots) == 0 {
-		log.Printf("Hostname is not 'midea', are you sure this is a Midea robot?")
-    	CurrentRobot = nil, errors.New("Robot model could not be determined or is not supported")
-        return
+		return fmt.Errorf("hostname %q is not 'midea', are you sure this is a Midea robot?", hostname)
 	}
 
-	serial, err := os.ReadFile(serialFile)
+	rawSerial, err := os.ReadFile(serialFile)
 	if err != nil {
-		log.Printf("Could not read robot serial from %s: %v; are you sure this is a Midea robot?", serialFile, err)
-		CurrentRobot = nil, errors.New("Robot model could not be determined or is not supported")
-		return
+		return fmt.Errorf("could not read robot serial from %s: %w; are you sure this is a Midea robot?", serialFile, err)
 	}
+	serial := strings.TrimSpace(string(rawSerial))
 
 	for _, cRobot := range possibleRobots {
 		for _, cSerial := range cRobot.Serials {
-			if cSerial == serial {
-				CurrentRobot = ValidateRobot(cRobot)
+			if cSerial == serial && ValidateRobot(cRobot) {
+				CurrentRobot = &cRobot
 				log.Printf("Using configuration for model: %s", CurrentRobot.model)
-				break
+				return nil
 			}
 		}
-	    if (CurrentRobot != nil) {
-	    	break
-	    }
 	}
+
+	return errors.New("robot model could not be determined or is not supported")
 }
 
 func ValidateRobot(robot Robot) bool {
-
-	if util.CheckDirectoryExists(cRobot.MapFolder) &&
-		util.CheckFilesExists(cRobot.mapFiles...) {
-		return true
-	}
-
-	return false
+	return util.CheckDirectoryExists(robot.MapFolder) &&
+		util.CheckFilesExists(robot.MapFiles()...)
 }

@@ -99,7 +99,10 @@ func main() {
 	config.InitConfig(config.Getenv("VALETUDO_CONFIG_PATH", "/userdata/valetudo_config.json"))
 	initMqttTopics()
 
-	robot.DetectRobot()
+	err := robot.DetectRobot()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var broker = config.MqttHost()
 	var port = config.MqttPort()
@@ -178,6 +181,17 @@ func saveMap(client mqtt.Client, mapName string) {
 	publishState(client, "idle")
 }
 
+// TODO: Handle slots, and backups of slots, this tar.gz business might not work so well
+// Idea:
+// We make the assumption that 2 slots are always the same (1 and something else). (To be tested)
+// We can restore a tar gz to 2 slots with the same date, that would be our current slot selection.
+// We might have to change `map_id` on the other slot, to its corresponding number, it seems slot 1 will fix itself.
+// This might only happen on reboot, but we will see.
+//
+// We should also use its own backup files where possible, but lets start listing those in general first.
+// So basically there would be 3 things this would handle, Slots, internal backups and the maploader backups.
+// Tiny bit complicated, but we'll get there.
+
 // Load the map of the given name
 func loadMap(client mqtt.Client, mapName string) {
 	if mapName == "" {
@@ -193,7 +207,17 @@ func loadMap(client mqtt.Client, mapName string) {
 	robot.StopProcesses()
 
 	log.Println("removing current map files")
-	util.RemoveDirContents(robot.CurrentRobot.MapFolders...)
+	// TODO: No not this
+	//util.RemoveDirContents(robot.CurrentRobot.MapFolders...)
+	// FIXME: not this either, we should take our slot in account, but this is a start
+	// Going to try to get general maploader functionality working first, where it uses its own backups
+	for _, mapFile := range robot.CurrentRobot.MapFiles() {
+		// If this fails we have a problem maybe, maybe not
+		RemoveFile(mapFile)
+    }
+
+	// This seems to be some cache it will come back after restarting the process
+	RemoveFile(robot.CurrentRobot.MapToPlannerFile)
 
 	if len(mapFileToLoadMatches) == 0 {
 		log.Println("requested map does not exist, loading blank map")
