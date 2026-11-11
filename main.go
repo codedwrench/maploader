@@ -92,11 +92,11 @@ func initMqttTopics() {
 }
 
 func main() {
-	maploaderDir = config.Getenv("MAPLOADER_DIR", "/data/maploader")
+	maploaderDir = config.Getenv("MAPLOADER_DIR", "/userdata/maploader")
 	rotationKeepMaps = config.RotationKeepMaps()
 
 	util.InitLogging(maploaderDir + "/log")
-	config.InitConfig(config.Getenv("VALETUDO_CONFIG_PATH", "/data/valetudo_config.json"))
+	config.InitConfig(config.Getenv("VALETUDO_CONFIG_PATH", "/userdata/valetudo_config.json"))
 	initMqttTopics()
 
 	robot.DetectRobot()
