@@ -54,6 +54,7 @@ func DetectRobot() {
 		for _, cSerial := range cRobot.Serials {
 			if cSerial == serial {
 				CurrentRobot = ValidateRobot(cRobot)
+				log.Printf("Using configuration for model: %s", CurrentRobot.model)
 				break
 			}
 		}
@@ -61,8 +62,6 @@ func DetectRobot() {
 	    	break
 	    }
 	}
-
-	log.Printf("Using configuration for model: %s", CurrentRobot.model)
 }
 
 func ValidateRobot(robot Robot) bool {
