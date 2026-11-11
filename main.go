@@ -170,7 +170,7 @@ func saveMap(client mqtt.Client, mapName string) {
 	err := util.RotateFile(rotationKeepMaps, filepath.Join(maploaderDir, mapName), "tar.gz")
 	checkAndHandleErrorWithMqtt(err, client)
 
-	err = tar.Tar(fmt.Sprintf("%s/%s.tar.gz", maploaderDir, mapName), robot.CurrentRobot.MapFilesAndFolders()...)
+	err = tar.Tar(fmt.Sprintf("%s/%s.tar.gz", maploaderDir, mapName), robot.CurrentRobot.MapFiles()...)
 	checkAndHandleErrorWithMqtt(err, client)
 
 	currentMap = mapName
