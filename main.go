@@ -223,6 +223,7 @@ func loadMap(client mqtt.Client, mapName string) {
 		log.Println("requested map does not exist, loading blank map")
 	} else {
 		log.Println("loading map from archive")
+		// TODO: Hmmmmmmm, i'm not sure if i'm a fan of this, since we only have 1 map folder, this could probably be relative?
 		err = tar.Untar(mapFileToLoadMatches[0], "/")
 		checkAndHandleErrorWithMqtt(err, client)
 	}
